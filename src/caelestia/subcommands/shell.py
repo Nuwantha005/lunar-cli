@@ -1,7 +1,28 @@
 import subprocess
+from pathlib import Path
 from argparse import Namespace
 
 from caelestia.utils.paths import c_cache_dir
+
+# Absolute path to our lunar-shell fork.
+# caelestia shell -d will launch this instead of the system config.
+# Set LUNAR_ROLLBACK=1 to force the original caelestia shell.
+LUNAR_SHELL_PATH = Path.home() / "work-linux/projects/arch/shell/lunar-shell"
+
+
+def _use_fork() -> bool:
+    """Return True if the lunar-shell fork should be used."""
+    import os
+    if os.environ.get("LUNAR_ROLLBACK") == "1":
+        return False
+    return LUNAR_SHELL_PATH.is_dir() and (LUNAR_SHELL_PATH / "shell.qml").exists()
+
+
+def _qs_config_args() -> list[str]:
+    """Return qs args to select the right shell config (fork or original)."""
+    if _use_fork():
+        return ["qs", "-p", str(LUNAR_SHELL_PATH)]
+    return ["qs", "-c", "caelestia"]
 
 
 class Command:
@@ -25,7 +46,7 @@ class Command:
             self.message(*self.args.message)
         else:
             # Start the shell
-            args = ["qs", "-c", "caelestia", "-n"]
+            args = [*_qs_config_args(), "-n"]
             if self.args.log_rules:
                 args.extend(["--log-rules", self.args.log_rules])
             if self.args.daemon:
@@ -41,7 +62,7 @@ class Command:
                             print(line, end="")
 
     def shell(self, *args: str) -> str:
-        return subprocess.check_output(["qs", "-c", "caelestia", *args], text=True)
+        return subprocess.check_output([*_qs_config_args(), *args], text=True)
 
     def filter_log(self, line: str) -> bool:
         return f"Cannot open: file://{c_cache_dir}/imagecache/" not in line
