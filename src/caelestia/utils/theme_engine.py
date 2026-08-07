@@ -70,11 +70,23 @@ def list_themes() -> List[Dict[str, Any]]:
             selected_wall = theme_info.get("selectedWallpaper")
             if selected_wall and (entry / selected_wall).exists():
                 theme_info["wallpaper"] = str(entry / selected_wall)
-            elif wallpapers_dir.exists():
-                walls = [
+            elif selected_wall:
+                # Try stem fallback (e.g. .jpg vs .png mismatch)
+                target_path = entry / selected_wall
+                if target_path.parent.exists():
+                    matched = next(
+                        (p for p in target_path.parent.iterdir()
+                         if p.stem == target_path.stem and p.suffix.lower() in [".jpg", ".jpeg", ".png", ".webp"]),
+                        None
+                    )
+                    if matched:
+                        theme_info["wallpaper"] = str(matched)
+
+            if not theme_info.get("wallpaper") and wallpapers_dir.exists():
+                walls = sorted([
                     p for p in wallpapers_dir.iterdir()
                     if p.suffix.lower() in [".jpg", ".jpeg", ".png", ".webp"]
-                ]
+                ])
                 if walls:
                     theme_info["wallpaper"] = str(walls[0])
 
@@ -83,11 +95,22 @@ def list_themes() -> List[Dict[str, Any]]:
             selected_pfp = theme_info.get("selectedPfp")
             if selected_pfp and (entry / selected_pfp).exists():
                 theme_info["pfp"] = str(entry / selected_pfp)
-            elif pfp_dir.exists():
-                pfps = [
+            elif selected_pfp:
+                target_path = entry / selected_pfp
+                if target_path.parent.exists():
+                    matched = next(
+                        (p for p in target_path.parent.iterdir()
+                         if p.stem == target_path.stem and p.suffix.lower() in [".jpg", ".jpeg", ".png", ".webp"]),
+                        None
+                    )
+                    if matched:
+                        theme_info["pfp"] = str(matched)
+
+            if not theme_info.get("pfp") and pfp_dir.exists():
+                pfps = sorted([
                     p for p in pfp_dir.iterdir()
                     if p.suffix.lower() in [".jpg", ".jpeg", ".png", ".webp"]
-                ]
+                ])
                 if pfps:
                     theme_info["pfp"] = str(pfps[0])
 
