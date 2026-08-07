@@ -41,6 +41,17 @@ class Set:
             print("No args given. Use --name, --flavour, --mode, --variant or --random to set a scheme")
 
 
+class Restore:
+    args: Namespace
+
+    def __init__(self, args: Namespace) -> None:
+        self.args = args
+
+    def run(self) -> None:
+        scheme = get_scheme()
+        apply_colours(scheme.colours, scheme.mode)
+
+
 class Get:
     args: Namespace
 

@@ -120,13 +120,22 @@ def get_colours_for_wall(wall: Path | str, no_smart: bool) -> None:
             }
         )
 
-    return {
+    res = {
         "name": name,
         "flavour": scheme.flavour,
         "mode": scheme.mode,
         "variant": scheme.variant,
         "colours": get_colours_for_image(get_thumb(wall, cache), scheme),
     }
+
+    try:
+        from caelestia.utils.theme import apply_gtk, apply_terms, gen_sequences
+        apply_terms(gen_sequences(res["colours"]))
+        apply_gtk(res["colours"], res["mode"])
+    except Exception:
+        pass
+
+    return res
 
 
 def convert_gif(wall: Path) -> Path:
