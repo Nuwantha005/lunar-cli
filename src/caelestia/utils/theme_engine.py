@@ -133,18 +133,10 @@ def set_theme(name: str) -> bool:
         return False
 
     theme_dir = Path(info["path"])
-
-    # 1. Resolve wallpaper
     wallpaper_path = info.get("wallpaper")
-    if wallpaper_path and os.path.exists(wallpaper_path):
-        set_wallpaper(Path(wallpaper_path))
-
-    # 2. Resolve & set profile picture (pfp)
     pfp_path = info.get("pfp")
-    if pfp_path and os.path.exists(pfp_path):
-        set_theme_pfp(pfp_path)
 
-    # 3. Update theme.json state
+    # 1. Save theme.json state FIRST so set_wallpaper() reads the updated schemeMode & schemeVariant
     state = {
         "name": info["name"],
         "path": str(theme_dir),
@@ -156,6 +148,15 @@ def set_theme(name: str) -> bool:
         "qylockTheme": info.get("qylockTheme", None),
     }
     save_theme_state(state)
+
+    # 2. Resolve & set wallpaper (triggers colour pipeline with updated theme state)
+    if wallpaper_path and os.path.exists(wallpaper_path):
+        set_wallpaper(Path(wallpaper_path))
+
+    # 3. Resolve & set profile picture (pfp)
+    if pfp_path and os.path.exists(pfp_path):
+        set_theme_pfp(pfp_path)
+
     log(f"Switched theme to '{info['name']}'")
     return True
 
