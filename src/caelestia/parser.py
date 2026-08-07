@@ -10,6 +10,7 @@ from caelestia.subcommands import (
     scheme,
     screenshot,
     shell,
+    theme,
     toggle,
     update,
     wallpaper,
@@ -124,6 +125,31 @@ def parse_args() -> tuple[argparse.ArgumentParser, argparse.Namespace]:
         action="store_true",
         help="do not automatically change the scheme mode based on wallpaper colour",
     )
+
+    # Create parser for theme opts
+    theme_parser = command_parser.add_parser("theme", help="manage themes")
+    theme_parser.set_defaults(cls=theme.Command)
+    theme_command_parser = theme_parser.add_subparsers(title="subcommands", dest="theme_command")
+
+    theme_set_parser = theme_command_parser.add_parser("set", help="set the current theme")
+    theme_set_parser.add_argument("name", help="name of the theme")
+
+    theme_get_parser = theme_command_parser.add_parser("get", help="get active theme name or JSON")
+    theme_get_parser.add_argument("-j", "--json", action="store_true", help="output JSON")
+
+    theme_list_parser = theme_command_parser.add_parser("list", help="list available themes")
+    theme_list_parser.add_argument("-j", "--json", action="store_true", help="output JSON")
+
+    theme_wp_parser = theme_command_parser.add_parser("wallpaper", help="manage theme wallpaper")
+    theme_wp_sub = theme_wp_parser.add_subparsers(title="subcommands", dest="wp_command")
+    theme_wp_set = theme_wp_sub.add_parser("set", help="set theme wallpaper")
+    theme_wp_set.add_argument("path", help="path to wallpaper image")
+    theme_wp_sub.add_parser("random", help="switch to random wallpaper within theme")
+
+    theme_pfp_parser = theme_command_parser.add_parser("pfp", help="manage theme profile picture")
+    theme_pfp_sub = theme_pfp_parser.add_subparsers(title="subcommands", dest="pfp_command")
+    theme_pfp_set = theme_pfp_sub.add_parser("set", help="set theme profile picture")
+    theme_pfp_set.add_argument("path", help="path to profile picture image")
 
     # Create parser for resizer opts
     resizer_parser = command_parser.add_parser("resizer", help="window resizer daemon")

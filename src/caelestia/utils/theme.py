@@ -455,6 +455,12 @@ def apply_colours(colours: dict[str, str], mode: str) -> None:
                 apply_cava(colours)
             apply_user_templates(colours, mode)
 
+            try:
+                from caelestia.utils.pywal_bridge import funnel_to_pywalfox
+                funnel_to_pywalfox(colours)
+            except Exception:
+                pass
+
             if post_hook := cfg.get("postHook"):
                 scheme = get_scheme()
                 subprocess.run(

@@ -147,7 +147,7 @@ def convert_gif(wall: Path) -> Path:
     return output_path
 
 
-def set_wallpaper(wall: Path, no_smart: bool) -> None:
+def set_wallpaper(wall: Path, no_smart: bool = False) -> None:
     # Make path absolute
     wall = Path(wall).resolve()
 
@@ -174,11 +174,24 @@ def set_wallpaper(wall: Path, no_smart: bool) -> None:
 
     scheme = get_scheme()
 
-    # Change mode and variant based on wallpaper colour
+    try:
+        from caelestia.utils.theme_engine import get_current_theme_state
+        theme_state = get_current_theme_state()
+    except Exception:
+        theme_state = {}
+
+    if theme_state and theme_state.get("schemeMode"):
+        scheme.mode = theme_state["schemeMode"]
+    if theme_state and theme_state.get("schemeVariant"):
+        scheme.variant = theme_state["schemeVariant"]
+
+    # Change mode and variant based on wallpaper colour if no theme lock and not no_smart
     if scheme.name == "dynamic" and not no_smart:
         smart_opts = get_smart_opts(wall_cache, cache)
-        scheme.mode = smart_opts["mode"]
-        scheme.variant = smart_opts["variant"]
+        if not (theme_state and theme_state.get("schemeMode")):
+            scheme.mode = smart_opts["mode"]
+        if not (theme_state and theme_state.get("schemeVariant")):
+            scheme.variant = smart_opts["variant"]
 
     # Update colours
     scheme.update_colours()
