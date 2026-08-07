@@ -140,6 +140,8 @@ def set_theme(name: str) -> bool:
     state = {
         "name": info["name"],
         "path": str(theme_dir),
+        "scheme": info.get("scheme", "dynamic"),
+        "schemeFlavour": info.get("schemeFlavour", "default"),
         "schemeMode": info.get("schemeMode", "dark"),
         "schemeVariant": info.get("schemeVariant", "tonalspot"),
         "selectedWallpaper": os.path.relpath(wallpaper_path, theme_dir) if wallpaper_path else None,
@@ -148,6 +150,23 @@ def set_theme(name: str) -> bool:
         "qylockTheme": info.get("qylockTheme", None),
     }
     save_theme_state(state)
+
+    # Update scheme.json immediately so colour pipeline works
+    try:
+        from caelestia.utils.scheme import get_scheme
+        scheme = get_scheme()
+        changed = False
+        target_scheme = info.get("scheme", "dynamic")
+        if scheme.name != target_scheme:
+            scheme.name = target_scheme
+            changed = True
+        target_flavour = info.get("schemeFlavour", "default")
+        if scheme.flavour != target_flavour:
+            scheme.flavour = target_flavour
+            changed = True
+        # Note: schemeMode and schemeVariant are applied by set_wallpaper automatically
+    except Exception as e:
+        log(f"Failed to update scheme: {e}")
 
     # 2. Resolve & set wallpaper (triggers colour pipeline with updated theme state)
     if wallpaper_path and os.path.exists(wallpaper_path):
