@@ -20,19 +20,36 @@ def m3_to_pywal_colors(colours: Dict[str, str]) -> Dict:
     fg = colours.get("onSurface", colours.get("onBackground", "ffffff"))
     cursor = colours.get("primary", colours.get("secondary", fg))
 
-    colors_dict = {}
-    for i in range(16):
-        key = f"term{i}"
-        val = colours.get(key, "000000")
-        colors_dict[f"color{i}"] = f"#{val}" if not val.startswith("#") else val
+    bg_hex = f"#{bg}" if not bg.startswith("#") else bg
+    fg_hex = f"#{fg}" if not fg.startswith("#") else fg
+    cursor_hex = f"#{cursor}" if not cursor.startswith("#") else cursor
+
+    colors_dict = {
+        "color0": bg_hex,
+        "color1": f"#{colours.get('term1', 'ff0000')}".replace("##", "#"),
+        "color2": f"#{colours.get('term2', '00ff00')}".replace("##", "#"),
+        "color3": f"#{colours.get('term3', 'ffff00')}".replace("##", "#"),
+        "color4": f"#{colours.get('term4', '0000ff')}".replace("##", "#"),
+        "color5": f"#{colours.get('term5', 'ff00ff')}".replace("##", "#"),
+        "color6": f"#{colours.get('term6', '00ffff')}".replace("##", "#"),
+        "color7": fg_hex,
+        "color8": f"#{colours.get('term0', '343434')}".replace("##", "#"),
+        "color9": f"#{colours.get('term9', 'ff5555')}".replace("##", "#"),
+        "color10": f"#{colours.get('term10', '55ff55')}".replace("##", "#"),
+        "color11": f"#{colours.get('term11', 'ffff55')}".replace("##", "#"),
+        "color12": f"#{colours.get('term12', '5555ff')}".replace("##", "#"),
+        "color13": f"#{colours.get('term13', 'ff55ff')}".replace("##", "#"),
+        "color14": f"#{colours.get('term14', '55ffff')}".replace("##", "#"),
+        "color15": fg_hex,
+    }
 
     return {
         "wallpaper": wallpaper_path,
         "alpha": "100",
         "special": {
-            "background": f"#{bg}" if not bg.startswith("#") else bg,
-            "foreground": f"#{fg}" if not fg.startswith("#") else fg,
-            "cursor": f"#{cursor}" if not cursor.startswith("#") else cursor,
+            "background": bg_hex,
+            "foreground": fg_hex,
+            "cursor": cursor_hex,
         },
         "colors": colors_dict,
     }
