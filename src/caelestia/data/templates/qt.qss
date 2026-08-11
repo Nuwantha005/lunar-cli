@@ -1,0 +1,112 @@
+/* =============================================================================
+   Caelestia Modern QSS Styling for Qt & Dolphin
+   ============================================================================= */
+
+/* Window & Main Containers */
+QMainWindow, QWidget#dolphinViewContainer {
+    background-color: #{{ $surface }};
+}
+
+/* File View Container - Floating rounded card style matching Thunar */
+QAbstractItemView, QTreeView, QListView, QHeaderView {
+    background-color: #{{ $surfaceContainerLow }};
+    border: 1px solid #{{ $outlineVariant }};
+    border-radius: 12px;
+    padding: 6px;
+    margin: 4px;
+}
+
+QAbstractItemView::item {
+    border-radius: 6px;
+    padding: 4px 6px;
+}
+
+QAbstractItemView::item:hover {
+    background-color: #{{ $surfaceContainerHigh }};
+}
+
+QAbstractItemView::item:selected {
+    background-color: #{{ $primaryContainer }};
+    color: #{{ $onPrimaryContainer }};
+    border-radius: 6px;
+}
+
+/* Sidebar Places View */
+KFilePlacesView, QWidget#placesDock {
+    background-color: transparent;
+    border: none;
+    padding: 6px;
+}
+
+KFilePlacesView::item {
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin: 2px 4px;
+}
+
+KFilePlacesView::item:hover {
+    background-color: #{{ $surfaceContainer }};
+}
+
+KFilePlacesView::item:selected {
+    background-color: #{{ $primaryContainer }};
+    color: #{{ $onPrimaryContainer }};
+}
+
+/* Tabs */
+QTabBar::tab {
+    background-color: transparent;
+    color: #{{ $onSurfaceVariant }};
+    padding: 6px 14px;
+    border-radius: 8px;
+    margin: 2px 3px;
+}
+
+QTabBar::tab:hover {
+    background-color: #{{ $surfaceContainer }};
+}
+
+QTabBar::tab:selected {
+    background-color: #{{ $primaryContainer }};
+    color: #{{ $onPrimaryContainer }};
+    font-weight: bold;
+}
+
+/* ToolBar & Header */
+QToolBar, KToolBar {
+    background-color: transparent;
+    border: none;
+    spacing: 4px;
+    padding: 4px;
+}
+
+QToolButton {
+    border-radius: 8px;
+    padding: 4px 8px;
+    background-color: transparent;
+}
+
+QToolButton:hover {
+    background-color: #{{ $surfaceContainer }};
+}
+
+QToolButton:checked {
+    background-color: #{{ $primaryContainer }};
+    color: #{{ $onPrimaryContainer }};
+}
+
+/* Splitters / Dividers */
+QSplitter::handle {
+    background-color: transparent;
+    width: 4px;
+    height: 4px;
+}
+
+/* Status Bar */
+QStatusBar {
+    background-color: #{{ $surfaceContainerLow }};
+    border-radius: 10px;
+    margin: 4px;
+    padding: 4px 10px;
+    color: #{{ $onSurface }};
+}

@@ -326,8 +326,13 @@ def apply_gtk(colours: dict[str, str], mode: str, icon_theme: str | None = None)
 
 @log_exception
 def apply_qt(colours: dict[str, str], mode: str, icon_theme: str | None = None) -> None:
-    colours = gen_replace(colours, templates_dir / f"qt{mode}.colors", hash=True)
-    atomic_write(config_dir / "qtengine/caelestia.colors", colours)
+    qt_colors = gen_replace(colours, templates_dir / f"qt{mode}.colors", hash=True)
+    atomic_write(config_dir / "qtengine/caelestia.colors", qt_colors)
+
+    qss_template = templates_dir / "qt.qss"
+    if qss_template.exists():
+        qss_content = gen_replace(colours, qss_template, hash=True)
+        atomic_write(config_dir / "qtengine/caelestia.qss", qss_content)
 
     config = (templates_dir / "qtengine.json").read_text()
     config = config.replace("{{ $mode }}", mode.capitalize())
