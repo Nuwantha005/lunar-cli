@@ -130,9 +130,10 @@ def get_colours_for_wall(wall: Path | str, no_smart: bool) -> None:
 
     try:
         from caelestia.utils.pywal_bridge import funnel_to_pywalfox
-        from caelestia.utils.theme import apply_gtk, apply_terms, gen_sequences
+        from caelestia.utils.theme import apply_gtk, apply_qt, apply_terms, gen_sequences
         apply_terms(gen_sequences(res["colours"]))
         apply_gtk(res["colours"], res["mode"])
+        apply_qt(res["colours"], res["mode"])
         funnel_to_pywalfox(res["colours"])
     except Exception:
         pass

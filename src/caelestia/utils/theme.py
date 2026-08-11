@@ -313,10 +313,13 @@ def apply_gtk(colours: dict[str, str], mode: str, icon_theme: str | None = None)
         atomic_write(gtk_config_dir / "gtk.css", gtk_template)
         atomic_write(gtk_config_dir / "thunar.css", thunar_template)
 
-    subprocess.run(["dconf", "write", "/org/gnome/desktop/interface/gtk-theme", "'adw-gtk3-dark'"])
-    subprocess.run(["dconf", "write", "/org/gnome/desktop/interface/color-scheme", f"'prefer-{mode}'"])
+    # NOTE: GTK3 apps (Thunar, etc.) do NOT live-reload user CSS (~/.config/gtk-3.0/gtk.css).
+    # The CSS provider caches it at startup. Running apps must be restarted to pick up changes.
+    # Only the shell (QML), terminals (ANSI sequences), and Firefox (pywalfox) update live.
+    subprocess.run(["dconf", "write", "/org/gnome/desktop/interface/gtk-theme", f"'adw-gtk3-{mode}'"], stderr=subprocess.DEVNULL)
+    subprocess.run(["dconf", "write", "/org/gnome/desktop/interface/color-scheme", f"'prefer-{mode}'"], stderr=subprocess.DEVNULL)
     gtk_icon_theme = icon_theme if icon_theme is not None else f"Papirus-{mode.capitalize()}"
-    subprocess.run(["dconf", "write", "/org/gnome/desktop/interface/icon-theme", f"'{gtk_icon_theme}'"])
+    subprocess.run(["dconf", "write", "/org/gnome/desktop/interface/icon-theme", f"'{gtk_icon_theme}'"], stderr=subprocess.DEVNULL)
 
     sync_papirus_colors(colours["primary"])
 
@@ -331,6 +334,15 @@ def apply_qt(colours: dict[str, str], mode: str, icon_theme: str | None = None) 
     if icon_theme is not None:
         config = config.replace(f'"iconTheme": "Papirus-{mode.capitalize()}"', f'"iconTheme": "{icon_theme}"')
     atomic_write(config_dir / "qtengine/config.json", config)
+
+    try:
+        subprocess.run(
+            ["dbus-send", "--type=signal", "/KGlobalSettings", "org.kde.KGlobalSettings.notifyChange", "int32:0", "int32:0"],
+            stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+        )
+    except Exception:
+        pass
 
 
 @log_exception
