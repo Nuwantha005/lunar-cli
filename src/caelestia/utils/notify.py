@@ -1,8 +1,12 @@
 import subprocess
 
 
-def notify(*args: str) -> str:
-    return subprocess.check_output(["notify-send", "-a", "caelestia-cli", *args], text=True).strip()
+def notify(*args: str, urgency: str = "low") -> str:
+    cmd = ["notify-send", "-a", "caelestia-cli", "-u", urgency, *args]
+    try:
+        return subprocess.check_output(cmd, text=True).strip()
+    except Exception:
+        return ""
 
 
 def close_notification(id: str) -> None:

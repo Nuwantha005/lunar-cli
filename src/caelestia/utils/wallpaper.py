@@ -131,7 +131,7 @@ def get_colours_for_wall(wall: Path | str, no_smart: bool) -> None:
     try:
         from caelestia.utils.pywal_bridge import funnel_to_pywalfox
         from caelestia.utils.theme import apply_gtk, apply_qt, apply_terms, gen_sequences
-        apply_terms(gen_sequences(res["colours"]))
+        apply_terms(gen_sequences(res["colours"]), res["colours"])
         apply_gtk(res["colours"], res["mode"])
         apply_qt(res["colours"], res["mode"])
         funnel_to_pywalfox(res["colours"])
@@ -208,6 +208,12 @@ def set_wallpaper(wall: Path, no_smart: bool = False) -> None:
     # Update colours
     scheme.update_colours()
     apply_colours(scheme.colours, scheme.mode)
+
+    try:
+        from caelestia.utils.notify import notify
+        notify("-u", "low", "Wallpaper applied", wall.name)
+    except Exception:
+        pass
 
     # Run custom post-hook if configured
     cfg = get_config().get("wallpaper", {})

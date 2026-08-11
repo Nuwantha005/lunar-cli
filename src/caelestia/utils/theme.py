@@ -120,26 +120,67 @@ def gen_sequences(colours: dict[str, str]) -> str:
     )
 
 
+def find_kitty_sockets() -> list[str]:
+    sockets: list[str] = []
+
+    if "KITTY_LISTEN_ON" in os.environ:
+        sockets.append(os.environ["KITTY_LISTEN_ON"])
+
+    runtime_dir = Path(os.getenv("XDG_RUNTIME_DIR", "/tmp"))
+
+    for p in [runtime_dir, Path("/tmp")]:
+        for pattern in ["mykitty*", "kitty*"]:
+            for sock in p.glob(pattern):
+                s = f"unix:{sock}"
+                if s not in sockets:
+                    sockets.append(s)
+
+    return sockets
+
+
+def gen_kitty_colors(colours: dict[str, str]) -> str:
+    bg = colours.get("surface", colours.get("background", "000000"))
+    fg = colours.get("onSurface", colours.get("onBackground", "ffffff"))
+    cursor = colours.get("secondary", fg)
+    res = f"foreground #{fg}\nbackground #{bg}\ncursor #{cursor}\n"
+    for i in range(16):
+        term = colours.get(f"term{i}", "000000")
+        res += f"color{i} #{term}\n"
+    return res
+
+
 @log_exception
-def apply_terms(sequences: str) -> None:
+def apply_terms(sequences: str, colours: dict[str, str] | None = None) -> None:
     state = c_state_dir / "sequences.txt"
     state.parent.mkdir(parents=True, exist_ok=True)
     state.write_text(sequences)
 
-    pts_path = Path("/dev/pts")
-    for pt in pts_path.iterdir():
-        if pt.name.isdigit():
-            try:
-                # Use non-blocking write with timeout to prevent hangs
-                import os
-
-                fd = os.open(str(pt), os.O_WRONLY | os.O_NONBLOCK | os.O_NOCTTY)
+    if colours:
+        kitty_conf = c_state_dir / "kitty-colors.conf"
+        kitty_conf.write_text(gen_kitty_colors(colours))
+        sockets = find_kitty_sockets()
+        if sockets:
+            for sock in sockets:
                 try:
-                    os.write(fd, sequences.encode())
-                finally:
-                    os.close(fd)
-            except (PermissionError, OSError, BlockingIOError):
-                # Skip terminals that are busy, closed, or inaccessible
+                    cmd = ["kitten", "@", f"--to={sock}", "set-colors", "--all", "-c", str(kitty_conf)]
+                    subprocess.run(
+                        cmd,
+                        env=os.environ,
+                        stderr=subprocess.DEVNULL,
+                        stdout=subprocess.DEVNULL,
+                    )
+                except Exception:
+                    pass
+        else:
+            try:
+                cmd = ["kitten", "@", "set-colors", "--all", "-c", str(kitty_conf)]
+                subprocess.run(
+                    cmd,
+                    env=os.environ,
+                    stderr=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                )
+            except Exception:
                 pass
 
 
@@ -440,7 +481,7 @@ def apply_colours(colours: dict[str, str], mode: str) -> None:
                 return cfg[key] if key in cfg else True
 
             if check("enableTerm"):
-                apply_terms(gen_sequences(colours))
+                apply_terms(gen_sequences(colours), colours)
             if check("enableHypr"):
                 apply_hypr(gen_lua(colours) if is_lua_config() else gen_conf(colours))
             if check("enableDiscord"):
