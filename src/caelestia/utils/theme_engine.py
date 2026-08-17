@@ -90,6 +90,13 @@ def list_themes() -> List[Dict[str, Any]]:
                 if walls:
                     theme_info["wallpaper"] = str(walls[0])
 
+            # Resolve active lock wallpaper preview for this theme
+            selected_lock_wall = theme_info.get("selectedLockWallpaper")
+            if selected_lock_wall and (entry / selected_lock_wall).exists():
+                theme_info["lockWallpaper"] = str(entry / selected_lock_wall)
+            else:
+                theme_info["lockWallpaper"] = theme_info.get("wallpaper")
+
             # Resolve pfp preview for this theme
             pfp_dir = entry / "pfp"
             selected_pfp = theme_info.get("selectedPfp")
@@ -134,6 +141,7 @@ def set_theme(name: str) -> bool:
 
     theme_dir = Path(info["path"])
     wallpaper_path = info.get("wallpaper")
+    lock_wallpaper_path = info.get("lockWallpaper") or wallpaper_path
     pfp_path = info.get("pfp")
 
     # 1. Save theme.json state FIRST so set_wallpaper() reads the updated schemeMode & schemeVariant
@@ -145,11 +153,18 @@ def set_theme(name: str) -> bool:
         "schemeMode": info.get("schemeMode", "dark"),
         "schemeVariant": info.get("schemeVariant", "tonalspot"),
         "selectedWallpaper": os.path.relpath(wallpaper_path, theme_dir) if wallpaper_path else None,
+        "selectedLockWallpaper": os.path.relpath(lock_wallpaper_path, theme_dir) if lock_wallpaper_path else None,
         "selectedPfp": os.path.relpath(pfp_path, theme_dir) if pfp_path else None,
         "lockBackend": info.get("lockBackend", "caelestia"),
         "qylockTheme": info.get("qylockTheme", None),
     }
     save_theme_state(state)
+
+    # Write lock override bg
+    if lock_wallpaper_path and os.path.exists(lock_wallpaper_path):
+        from caelestia.utils.paths import lock_override_bg_path
+        lock_override_bg_path.parent.mkdir(parents=True, exist_ok=True)
+        lock_override_bg_path.write_text(str(lock_wallpaper_path))
 
     # Update scheme.json immediately so colour pipeline works
     try:
@@ -213,6 +228,42 @@ def set_theme_wallpaper(wallpaper_path: str) -> bool:
         except ValueError:
             pass  # Wallpaper is outside active theme dir
 
+    return True
+
+
+def set_theme_lock_wallpaper(wallpaper_path: str) -> bool:
+    wp = Path(wallpaper_path).resolve()
+    if not wp.exists():
+        log(f"Lock wallpaper path '{wallpaper_path}' does not exist.")
+        return False
+
+    from caelestia.utils.paths import lock_override_bg_path
+    lock_override_bg_path.parent.mkdir(parents=True, exist_ok=True)
+    lock_override_bg_path.write_text(str(wp))
+
+    state = get_current_theme_state()
+    if state.get("path"):
+        theme_dir = Path(state["path"])
+        try:
+            rel = wp.relative_to(theme_dir)
+            state["selectedLockWallpaper"] = str(rel)
+            save_theme_state(state)
+
+            theme_meta_path = theme_dir / "theme.json"
+            meta = {}
+            if theme_meta_path.exists():
+                try:
+                    with open(theme_meta_path, "r", encoding="utf-8") as f:
+                        meta = json.load(f)
+                except Exception:
+                    pass
+            meta["selectedLockWallpaper"] = str(rel)
+            with open(theme_meta_path, "w", encoding="utf-8") as f:
+                json.dump(meta, f, indent=2)
+        except ValueError:
+            pass
+
+    log(f"Set lock wallpaper to '{wp}'")
     return True
 
 

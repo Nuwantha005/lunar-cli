@@ -72,6 +72,12 @@ class Command:
         if state_changed:
             save_theme_state(state)
 
+        if lock_wp := getattr(self.args, "set_lock_wallpaper", None):
+            from caelestia.utils.theme_engine import set_theme_lock_wallpaper
+            set_theme_lock_wallpaper(lock_wp)
+            if not getattr(self.args, "lock_now", False) and not getattr(self.args, "backend", None) and not getattr(self.args, "theme", None):
+                return
+
         # If --set-backend or --set-theme was used without requesting lock, don't lock
         if getattr(self.args, "set_backend", None) or getattr(self.args, "set_theme", None):
             if not getattr(self.args, "lock_now", False) and not getattr(self.args, "backend", None) and not getattr(self.args, "theme", None):

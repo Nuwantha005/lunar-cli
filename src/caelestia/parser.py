@@ -162,6 +162,7 @@ def parse_args() -> tuple[argparse.ArgumentParser, argparse.Namespace]:
     lock_parser.add_argument("-t", "--theme", help="qylock theme to use and lock immediately")
     lock_parser.add_argument("--set-backend", choices=["caelestia", "qylock", "hyprlock"], help="set lock backend without locking")
     lock_parser.add_argument("--set-theme", help="set qylock theme without locking")
+    lock_parser.add_argument("--set-lock-wallpaper", help="set lock screen wallpaper path without locking")
     lock_parser.add_argument("--list-backends", action="store_true", help="list available lock backends")
     lock_parser.add_argument("--list-themes", action="store_true", help="list available qylock themes")
 
