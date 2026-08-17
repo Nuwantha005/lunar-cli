@@ -5,6 +5,7 @@ from caelestia.subcommands import (
     clipboard,
     emoji,
     install,
+    lock,
     record,
     resizer,
     scheme,
@@ -153,6 +154,16 @@ def parse_args() -> tuple[argparse.ArgumentParser, argparse.Namespace]:
     theme_pfp_sub = theme_pfp_parser.add_subparsers(title="subcommands", dest="pfp_command")
     theme_pfp_set = theme_pfp_sub.add_parser("set", help="set theme profile picture")
     theme_pfp_set.add_argument("path", help="path to profile picture image")
+
+    # Create parser for lock opts
+    lock_parser = command_parser.add_parser("lock", help="lock session or configure lock backend/theme")
+    lock_parser.set_defaults(cls=lock.Command)
+    lock_parser.add_argument("-b", "--backend", choices=["caelestia", "qylock", "hyprlock"], help="lock backend to use and lock immediately")
+    lock_parser.add_argument("-t", "--theme", help="qylock theme to use and lock immediately")
+    lock_parser.add_argument("--set-backend", choices=["caelestia", "qylock", "hyprlock"], help="set lock backend without locking")
+    lock_parser.add_argument("--set-theme", help="set qylock theme without locking")
+    lock_parser.add_argument("--list-backends", action="store_true", help="list available lock backends")
+    lock_parser.add_argument("--list-themes", action="store_true", help="list available qylock themes")
 
     # Create parser for resizer opts
     resizer_parser = command_parser.add_parser("resizer", help="window resizer daemon")

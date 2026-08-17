@@ -16,6 +16,7 @@ from caelestia.utils.material import get_colours_for_image
 from caelestia.utils.paths import (
     compute_hash,
     get_config,
+    lock_override_bg_path,
     wallpaper_link_path,
     wallpaper_path_path,
     wallpaper_thumbnail_path,
@@ -173,6 +174,8 @@ def set_wallpaper(wall: Path, no_smart: bool = False) -> None:
     # Update files
     wallpaper_path_path.parent.mkdir(parents=True, exist_ok=True)
     wallpaper_path_path.write_text(str(wall))
+    lock_override_bg_path.parent.mkdir(parents=True, exist_ok=True)
+    lock_override_bg_path.write_text(str(wall))
     wallpaper_link_path.parent.mkdir(parents=True, exist_ok=True)
     wallpaper_link_path.unlink(missing_ok=True)
     wallpaper_link_path.symlink_to(wall)

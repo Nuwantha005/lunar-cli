@@ -18,6 +18,7 @@ c_config_dir: Path = config_dir / "caelestia"
 c_data_dir: Path = data_dir / "caelestia"
 c_state_dir: Path = state_dir / "caelestia"
 c_cache_dir: Path = cache_dir / "caelestia"
+lock_override_bg_path: Path = c_state_dir / "lock_override_bg"
 
 user_config_path: Path = c_config_dir / "cli.json"
 cli_data_dir: Path = Path(__file__).parent.parent / "data"
