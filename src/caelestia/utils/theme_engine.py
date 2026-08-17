@@ -282,6 +282,15 @@ def set_theme_pfp(pfp_path: str) -> bool:
     except Exception:
         shutil.copy(pfp, PFP_STATE_FILE)
 
+    # Symlink to ~/.face
+    face_file = Path.home() / ".face"
+    if face_file.is_symlink() or face_file.exists():
+        face_file.unlink(missing_ok=True)
+    try:
+        face_file.symlink_to(pfp)
+    except Exception:
+        shutil.copy(pfp, face_file)
+
     state = get_current_theme_state()
     if state.get("path"):
         theme_dir = Path(state["path"])
