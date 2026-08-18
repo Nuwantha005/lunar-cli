@@ -160,6 +160,7 @@ def parse_args() -> tuple[argparse.ArgumentParser, argparse.Namespace]:
     lock_parser.set_defaults(cls=lock.Command)
     lock_parser.add_argument("-b", "--backend", choices=["caelestia", "qylock", "custom-qylock", "hyprlock"], help="lock backend to use and lock immediately")
     lock_parser.add_argument("-t", "--theme", help="qylock theme to use and lock immediately")
+    lock_parser.add_argument("-p", "--picker", action="store_true", help="open instant lock screen picker window")
     lock_parser.add_argument("--hyprlock-config", help="hyprlock config to use and lock immediately")
     lock_parser.add_argument("--set-backend", choices=["caelestia", "qylock", "custom-qylock", "hyprlock"], help="set lock backend without locking")
     lock_parser.add_argument("--set-theme", help="set qylock theme without locking")

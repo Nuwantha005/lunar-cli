@@ -51,6 +51,14 @@ class Command:
         self.args = args
 
     def run(self) -> None:
+        if getattr(self.args, "picker", False):
+            try:
+                subprocess.run([*_qs_config_args(), "ipc", "call", "lock", "openPicker"], check=False)
+                log("Opened instant lock screen picker")
+            except Exception as e:
+                warn(f"Failed to open lock screen picker: {e}")
+            return
+
         if getattr(self.args, "list_backends", False):
             state = get_current_theme_state()
             curr = state.get("lockBackend", "caelestia")
