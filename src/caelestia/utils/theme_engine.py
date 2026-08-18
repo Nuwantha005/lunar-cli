@@ -90,6 +90,24 @@ def list_themes() -> List[Dict[str, Any]]:
                 if walls:
                     theme_info["wallpaper"] = str(walls[0])
 
+            # Resolve hyprlock configs for this theme
+            hyprlock_dir = entry / "hyprlock"
+            hypr_configs: List[str] = []
+            if hyprlock_dir.exists() and hyprlock_dir.is_dir():
+                hypr_configs = sorted([
+                    p.name for p in hyprlock_dir.iterdir()
+                    if p.is_file() and p.name.endswith(".conf")
+                ])
+            theme_info["hyprlockConfigs"] = hypr_configs
+
+            selected_hypr_config = theme_info.get("hyprlockConfig")
+            if selected_hypr_config and (hyprlock_dir / selected_hypr_config).exists():
+                theme_info["hyprlockConfig"] = selected_hypr_config
+            elif hypr_configs:
+                theme_info["hyprlockConfig"] = hypr_configs[0]
+            else:
+                theme_info["hyprlockConfig"] = None
+
             # Resolve active lock wallpaper preview for this theme
             selected_lock_wall = theme_info.get("selectedLockWallpaper")
             if selected_lock_wall and (entry / selected_lock_wall).exists():
@@ -157,6 +175,7 @@ def set_theme(name: str) -> bool:
         "selectedPfp": os.path.relpath(pfp_path, theme_dir) if pfp_path else None,
         "lockBackend": info.get("lockBackend", "caelestia"),
         "qylockTheme": info.get("qylockTheme", None),
+        "hyprlockConfig": info.get("hyprlockConfig", None),
     }
     save_theme_state(state)
 
@@ -264,6 +283,37 @@ def set_theme_lock_wallpaper(wallpaper_path: str) -> bool:
             pass
 
     log(f"Set lock wallpaper to '{wp}'")
+    return True
+
+
+def set_theme_hyprlock_config(config_name: str) -> bool:
+    state = get_current_theme_state()
+    if not state.get("path"):
+        log("No active theme path set.")
+        return False
+
+    theme_dir = Path(state["path"])
+    hypr_config_file = theme_dir / "hyprlock" / config_name
+    if not hypr_config_file.exists():
+        log(f"Hyprlock config '{config_name}' does not exist in {theme_dir / 'hyprlock'}.")
+        return False
+
+    state["hyprlockConfig"] = config_name
+    save_theme_state(state)
+
+    theme_meta_path = theme_dir / "theme.json"
+    meta = {}
+    if theme_meta_path.exists():
+        try:
+            with open(theme_meta_path, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+        except Exception:
+            pass
+    meta["hyprlockConfig"] = config_name
+    with open(theme_meta_path, "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2)
+
+    log(f"Set Hyprlock config to '{config_name}'")
     return True
 
 

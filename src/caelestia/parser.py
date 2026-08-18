@@ -160,11 +160,14 @@ def parse_args() -> tuple[argparse.ArgumentParser, argparse.Namespace]:
     lock_parser.set_defaults(cls=lock.Command)
     lock_parser.add_argument("-b", "--backend", choices=["caelestia", "qylock", "hyprlock"], help="lock backend to use and lock immediately")
     lock_parser.add_argument("-t", "--theme", help="qylock theme to use and lock immediately")
+    lock_parser.add_argument("--hyprlock-config", help="hyprlock config to use and lock immediately")
     lock_parser.add_argument("--set-backend", choices=["caelestia", "qylock", "hyprlock"], help="set lock backend without locking")
     lock_parser.add_argument("--set-theme", help="set qylock theme without locking")
+    lock_parser.add_argument("--set-hyprlock-config", help="set hyprlock config file name without locking")
     lock_parser.add_argument("--set-lock-wallpaper", help="set lock screen wallpaper path without locking")
     lock_parser.add_argument("--list-backends", action="store_true", help="list available lock backends")
     lock_parser.add_argument("--list-themes", action="store_true", help="list available qylock themes")
+    lock_parser.add_argument("--list-hyprlock-configs", action="store_true", help="list available hyprlock configs for active theme")
 
     # Create parser for resizer opts
     resizer_parser = command_parser.add_parser("resizer", help="window resizer daemon")
