@@ -9,7 +9,7 @@ from caelestia.utils.paths import c_state_dir
 from caelestia.utils.theme_engine import get_current_theme_state, save_theme_state, set_theme_hyprlock_config
 from caelestia.subcommands.shell import _qs_config_args
 
-VALID_BACKENDS = ["caelestia", "qylock", "hyprlock"]
+VALID_BACKENDS = ["caelestia", "qylock", "custom-qylock", "hyprlock"]
 
 
 def get_qylock_themes() -> List[str]:

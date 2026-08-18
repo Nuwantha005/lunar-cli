@@ -158,10 +158,10 @@ def parse_args() -> tuple[argparse.ArgumentParser, argparse.Namespace]:
     # Create parser for lock opts
     lock_parser = command_parser.add_parser("lock", help="lock session or configure lock backend/theme")
     lock_parser.set_defaults(cls=lock.Command)
-    lock_parser.add_argument("-b", "--backend", choices=["caelestia", "qylock", "hyprlock"], help="lock backend to use and lock immediately")
+    lock_parser.add_argument("-b", "--backend", choices=["caelestia", "qylock", "custom-qylock", "hyprlock"], help="lock backend to use and lock immediately")
     lock_parser.add_argument("-t", "--theme", help="qylock theme to use and lock immediately")
     lock_parser.add_argument("--hyprlock-config", help="hyprlock config to use and lock immediately")
-    lock_parser.add_argument("--set-backend", choices=["caelestia", "qylock", "hyprlock"], help="set lock backend without locking")
+    lock_parser.add_argument("--set-backend", choices=["caelestia", "qylock", "custom-qylock", "hyprlock"], help="set lock backend without locking")
     lock_parser.add_argument("--set-theme", help="set qylock theme without locking")
     lock_parser.add_argument("--set-hyprlock-config", help="set hyprlock config file name without locking")
     lock_parser.add_argument("--set-lock-wallpaper", help="set lock screen wallpaper path without locking")
