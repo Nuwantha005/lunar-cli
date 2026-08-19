@@ -137,6 +137,22 @@ def hyprlock_cache_path(wallpaper: Path, pfp: Path, config_id: str) -> Path:
 
 def capture_custom_qylock(theme_name: str, wallpaper: Path, output: Path) -> bool:
     """Capture Qylock theme with custom wallpaper via headless Labwc."""
+    bg_override = str(wallpaper)
+    temp_frame = None
+
+    if wallpaper.suffix.lower() in [".mp4", ".webm", ".mkv", ".mov", ".avi"]:
+        temp_frame = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+        temp_frame.close()
+        bg_override = temp_frame.name
+        try:
+            subprocess.run(
+                ["ffmpeg", "-y", "-ss", "00:00:01", "-i", str(wallpaper), "-vframes", "1", bg_override],
+                capture_output=True,
+                timeout=5,
+            )
+        except Exception as e:
+            print(f"Warning: Failed to extract video frame from {wallpaper}: {e}")
+
     lock_dir = Path.home() / "work-linux/projects/arch/shell/lunar-lock"
     lock_bin = lock_dir / "quickshell-lockscreen/lock.sh"
 
@@ -146,15 +162,23 @@ def capture_custom_qylock(theme_name: str, wallpaper: Path, output: Path) -> boo
     exec_cmd = (
         f"export QS_THEME='{theme_name}'; "
         f"export QYLOCK_THEME='{theme_name}'; "
-        f"export QYLOCK_OVERRIDE_BG='{wallpaper}'; "
+        f"export QYLOCK_OVERRIDE_BG='{bg_override}'; "
         f"bash '{lock_bin}' '{theme_name}'"
     )
 
-    return capture_with_labwc(
+    result = capture_with_labwc(
         exec_cmd=exec_cmd,
         output_path=output,
         settle_delay=CUSTOM_QYLOCK_SETTLE_DELAY,
     )
+
+    if temp_frame and os.path.exists(temp_frame.name):
+        try:
+            os.unlink(temp_frame.name)
+        except Exception:
+            pass
+
+    return result
 
 
 def custom_qylock_cache_path(wallpaper: Path, theme_name: str) -> Path:
