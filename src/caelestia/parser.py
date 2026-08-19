@@ -169,6 +169,13 @@ def parse_args() -> tuple[argparse.ArgumentParser, argparse.Namespace]:
     lock_parser.add_argument("--list-backends", action="store_true", help="list available lock backends")
     lock_parser.add_argument("--list-themes", action="store_true", help="list available qylock themes")
     lock_parser.add_argument("--list-hyprlock-configs", action="store_true", help="list available hyprlock configs for active theme")
+    lock_parser.add_argument("--generate-previews", action="store_true", help="generate preview images for the lock screen picker")
+    lock_parser.add_argument("--render-preview", action="store_true", help="render a single preview image on demand for picker JIT")
+    lock_parser.add_argument("--preview-backend", choices=["hyprlock", "custom-qylock"], help="which backend to generate previews for")
+    lock_parser.add_argument("--preview-wallpaper", help="wallpaper path for preview rendering")
+    lock_parser.add_argument("--preview-pfp", help="profile picture path for hyprlock preview rendering")
+    lock_parser.add_argument("--preview-theme", help="qylock theme name for custom-qylock preview rendering")
+    lock_parser.add_argument("--preview-output", help="destination file path for rendered preview image")
 
     # Create parser for resizer opts
     resizer_parser = command_parser.add_parser("resizer", help="window resizer daemon")

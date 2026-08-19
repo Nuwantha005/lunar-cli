@@ -51,6 +51,21 @@ class Command:
         self.args = args
 
     def run(self) -> None:
+        if getattr(self.args, "render_preview", False):
+            self._render_single_preview()
+            return
+
+        if getattr(self.args, "generate_previews", False):
+            backend = getattr(self.args, "preview_backend", None)
+            if not backend:
+                self._generate_hyprlock_previews()
+                self._generate_custom_qylock_previews()
+            elif backend == "hyprlock":
+                self._generate_hyprlock_previews()
+            elif backend == "custom-qylock":
+                self._generate_custom_qylock_previews()
+            return
+
         if getattr(self.args, "picker", False):
             try:
                 subprocess.run([*_qs_config_args(), "ipc", "call", "lock", "openPicker"], check=False)
@@ -195,3 +210,132 @@ class Command:
                 subprocess.Popen(["hyprlock"])
             except Exception as e:
                 warn(f"Failed to execute hyprlock: {e}")
+
+    def _get_wallpaper_list(self) -> List[Path]:
+        state = get_current_theme_state()
+        walls: List[Path] = []
+        if theme_path := state.get("path"):
+            walls_dir = Path(theme_path) / "wallpapers"
+            if walls_dir.exists() and walls_dir.is_dir():
+                walls.extend([p for p in sorted(walls_dir.rglob("*")) if p.is_file() and p.suffix.lower() in [".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".webm"]])
+        if not walls:
+            def_dir = Path.home() / ".local/share/caelestia/wallpapers"
+            if def_dir.exists():
+                walls.extend([p for p in sorted(def_dir.rglob("*")) if p.is_file() and p.suffix.lower() in [".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".webm"]])
+        return walls or [Path.home() / ".local/state/caelestia/wallpaper/current"]
+
+    def _get_pfp_list(self) -> List[Path]:
+        state = get_current_theme_state()
+        pfps: List[Path] = []
+        if theme_path := state.get("path"):
+            pfp_dir = Path(theme_path) / "pfp"
+            if pfp_dir.exists() and pfp_dir.is_dir():
+                pfps.extend([p for p in sorted(pfp_dir.glob("*")) if p.is_file() and p.suffix.lower() in [".jpg", ".jpeg", ".png", ".webp"]])
+        if not pfps:
+            face = Path.home() / ".face"
+            if face.exists():
+                pfps.append(face)
+        return pfps or [c_state_dir / "pfp.jpg"]
+
+    def _render_single_preview(self) -> None:
+        from caelestia.utils.preview import capture_hyprlock, capture_custom_qylock
+        backend = getattr(self.args, "preview_backend", None)
+        out_path = getattr(self.args, "preview_output", None)
+        if not backend or not out_path:
+            warn("Both --preview-backend and --preview-output are required for --render-preview")
+            return
+
+        output = Path(out_path)
+        wall = Path(getattr(self.args, "preview_wallpaper", "") or "")
+
+        if backend == "hyprlock":
+            configs = get_hyprlock_configs()
+            if not configs:
+                warn("No hyprlock configs available for current theme")
+                return
+            pfp = Path(getattr(self.args, "preview_pfp", "") or "")
+            state = get_current_theme_state()
+            theme_dir = Path(state.get("path", ""))
+            cfg_path = theme_dir / "hyprlock" / configs[0]
+            if capture_hyprlock(wall, pfp, cfg_path, output):
+                log(f"Rendered hyprlock preview: {output.name}")
+            else:
+                warn(f"Failed to render hyprlock preview: {output.name}")
+        elif backend == "custom-qylock":
+            theme = getattr(self.args, "preview_theme", "") or "nier-automata"
+            if capture_custom_qylock(theme, wall, output):
+                log(f"Rendered custom-qylock preview: {output.name}")
+            else:
+                warn(f"Failed to render custom-qylock preview: {output.name}")
+
+    def _generate_hyprlock_previews(self) -> None:
+        from caelestia.utils.preview import (
+            capture_hyprlock, hyprlock_cache_path, is_cache_valid,
+            preview_cache_key, get_file_identity, add_manifest_entry
+        )
+        configs = get_hyprlock_configs()
+        if not configs:
+            warn("No hyprlock configs available for current theme. Skipping hyprlock preview generation.")
+            return
+
+        wallpapers = self._get_wallpaper_list()
+        pfps = self._get_pfp_list()
+        state = get_current_theme_state()
+        theme_dir = Path(state.get("path", ""))
+
+        total = len(wallpapers) * len(pfps) * len(configs)
+        log(f"Generating hyprlock previews ({total} combinations)...")
+        generated, skipped = 0, 0
+
+        for wall in wallpapers:
+            for pfp in pfps:
+                for cfg in configs:
+                    cache_path = hyprlock_cache_path(wall, pfp, cfg)
+                    key = preview_cache_key(get_file_identity(wall), get_file_identity(pfp), cfg)
+                    if is_cache_valid(cache_path):
+                        skipped += 1
+                        continue
+                    log(f"Generating hyprlock preview: {wall.name} x {pfp.name} x {cfg}")
+                    cfg_path = theme_dir / "hyprlock" / cfg
+                    if capture_hyprlock(wall, pfp, cfg_path, cache_path):
+                        add_manifest_entry("hyprlock", key, {
+                            "wallpaper": str(wall),
+                            "pfp": str(pfp),
+                            "config": cfg,
+                        }, cache_path.name)
+                        generated += 1
+                    else:
+                        warn(f"Failed hyprlock capture for {wall.name}")
+
+        log(f":: Hyprlock previews: {generated} generated, {skipped} cached ({total} total)")
+
+    def _generate_custom_qylock_previews(self) -> None:
+        from caelestia.utils.preview import (
+            capture_custom_qylock, custom_qylock_cache_path, is_cache_valid,
+            preview_cache_key, get_file_identity, add_manifest_entry
+        )
+        wallpapers = self._get_wallpaper_list()
+        themes = get_qylock_themes()
+
+        total = len(wallpapers) * len(themes)
+        log(f"Generating custom qylock previews ({total} combinations)...")
+        generated, skipped = 0, 0
+
+        for wall in wallpapers:
+            for theme in themes:
+                cache_path = custom_qylock_cache_path(wall, theme)
+                key = preview_cache_key(get_file_identity(wall), theme)
+                if is_cache_valid(cache_path):
+                    skipped += 1
+                    continue
+                log(f"Generating custom qylock preview: {wall.name} x {theme}")
+                if capture_custom_qylock(theme, wall, cache_path):
+                    add_manifest_entry("custom-qylock", key, {
+                        "wallpaper": str(wall),
+                        "theme": theme,
+                    }, cache_path.name)
+                    generated += 1
+                else:
+                    warn(f"Failed custom qylock capture for {wall.name} x {theme}")
+
+        log(f":: Custom Qylock previews: {generated} generated, {skipped} cached ({total} total)")
