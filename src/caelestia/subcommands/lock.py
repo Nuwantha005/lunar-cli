@@ -238,7 +238,7 @@ class Command:
         return pfps or [c_state_dir / "pfp.jpg"]
 
     def _render_single_preview(self) -> None:
-        from caelestia.utils.preview import capture_hyprlock, capture_custom_qylock
+        from caelestia.utils.preview import capture_hyprlock, capture_custom_qylock, add_manifest_entry, preview_cache_key, get_file_identity
         backend = getattr(self.args, "preview_backend", None)
         out_path = getattr(self.args, "preview_output", None)
         if not backend or not out_path:
@@ -258,12 +258,23 @@ class Command:
             theme_dir = Path(state.get("path", ""))
             cfg_path = theme_dir / "hyprlock" / configs[0]
             if capture_hyprlock(wall, pfp, cfg_path, output):
+                key = preview_cache_key(get_file_identity(wall), get_file_identity(pfp), configs[0])
+                add_manifest_entry("hyprlock", key, {
+                    "wallpaper": str(wall),
+                    "pfp": str(pfp),
+                    "config": configs[0],
+                }, output.name)
                 log(f"Rendered hyprlock preview: {output.name}")
             else:
                 warn(f"Failed to render hyprlock preview: {output.name}")
         elif backend == "custom-qylock":
             theme = getattr(self.args, "preview_theme", "") or "nier-automata"
             if capture_custom_qylock(theme, wall, output):
+                key = preview_cache_key(get_file_identity(wall), theme)
+                add_manifest_entry("custom-qylock", key, {
+                    "wallpaper": str(wall),
+                    "theme": theme,
+                }, output.name)
                 log(f"Rendered custom-qylock preview: {output.name}")
             else:
                 warn(f"Failed to render custom-qylock preview: {output.name}")
