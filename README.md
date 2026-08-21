@@ -1,269 +1,62 @@
-# caelestia-cli
+# lunar-cli
 
-The main control script for the Caelestia dotfiles.
+> [!NOTE]
+> This repository is a custom fork of [caelestia-dots/cli](https://github.com/caelestia-dots/cli). It serves as the main command-line control and background automation engine for [lunar-shell](https://github.com/Nuwantha005/lunar-shell) and [lunar-lock](https://github.com/Nuwantha005/lunar-lock).
 
-<details><summary id="dependencies">External dependencies</summary>
+---
 
-- [`libnotify`](https://gitlab.gnome.org/GNOME/libnotify) - sending notifications
-- [`swappy`](https://github.com/jtheoof/swappy) - screenshot editor
-- [`grim`](https://gitlab.freedesktop.org/emersion/grim) - taking screenshots
-- [`dart-sass`](https://github.com/sass/dart-sass) - discord theming
-- [`wl-clipboard`](https://github.com/bugaevc/wl-clipboard) - copying to clipboard
-- [`slurp`](https://github.com/emersion/slurp) - selecting an area
-- [`gpu-screen-recorder`](https://git.dec05eba.com/gpu-screen-recorder/about) - screen recording
-- `glib2` - closing notifications
-- [`cliphist`](https://github.com/sentriz/cliphist) - clipboard history
-- [`fuzzel`](https://codeberg.org/dnkl/fuzzel) - clipboard history/emoji picker
+## Reasoning for Forking & Modifications
 
-</details>
+The original `caelestia-cli` was modified to create `lunar-cli` to handle expanded inter-application communication, dynamic color synchronization, and headless rendering:
+- **Hot-Swappable Theme Recoloring**: Extended the scheme generation pipeline to instantly recolor applications on scheme changes without needing process restarts.
+- **Headless Lock Preview Pipeline**: Implemented a standalone preview generator using `labwc` and `ffmpeg` to pre-render screenshot previews for lock screen themes and video backgrounds.
+- **Enhanced Lock IPC**: Expanded `caelestia lock` subcommands to support dynamic lock screen backends (`caelestia`, `qylock`, `custom-qylock`, `hyprlock`), preview rendering, and emergency unlocking.
 
-## Installation
+---
 
-### Arch linux
+## Features
 
-The CLI is available from the AUR as `caelestia-cli`. You can install it with an AUR helper
-like [`yay`](https://github.com/Jguer/yay) or manually downloading the PKGBUILD and running `makepkg -si`.
+- **Dynamic Hot-Swappable Recoloring**: Colors update instantly across Kitty terminals, Qt/KDE applications, Firefox (via Pywalfox), and `lunar-shell` components.
+  - *Note: GTK applications (such as Thunar) require closing all active instances to apply new colors due to GTK design limitations.*
+- **Headless Preview Pipeline**: Subcommands (`caelestia lock --generate-previews` and `caelestia lock --render-preview`) generate accurate lock screen visual previews in a headless environment.
+- **Smart Cache Management**: Preview cache directory (`~/.cache/caelestia/previews/`) with SHA-256 mtime hashing to auto-invalidate stale thumbnails when theme assets or wallpapers change.
 
-A package following the latest commit also exists as `caelestia-cli-git`. This is bleeding edge
-and likely to be unstable/have bugs. Regular users are recommended to use the stable package
-(`caelestia-cli`).
+---
 
-### Nix
+## Technical Details
 
-You can run the CLI directly via `nix run`:
+### Hot-Swappable Recoloring Architecture
 
-```sh
-nix run github:caelestia-dots/cli
-```
+`lunar-cli` uses target-specific mechanisms to push color changes live:
+- **Qt / KDE Applications**: Generates color definitions (`caelestia.colors` / `caelestia.qss`) and broadcasts the DBus signal `org.kde.KGlobalSettings.notifyChange`, prompting applications like Dolphin to reload colors immediately.
+- **Kitty Terminals**: Targets active Kitty Unix sockets (`kitten @ --to=unix:<socket> set-colors ...`) using `~/.local/state/caelestia/kitty-colors.conf`, eliminating terminal flashing and avoiding filesystem watching overhead.
+- **Firefox Browser**: Maps Material You palette tokens into `~/.cache/wal/colors.json` and triggers `pywalfox update` via the Pywalfox native messaging bridge.
 
-Or add it to your system configuration:
+### Headless Preview Pipeline Mechanics
 
-```nix
-{
-  inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+Location: `lunar-cli/src/caelestia/utils/preview.py`
 
-    caelestia-cli = {
-      url = "github:caelestia-dots/cli";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-  };
-}
-```
+When generating previews (`capture_with_labwc`):
+1. **Compositor Execution**: Spawns `labwc` in a headless environment (`WLR_BACKENDS=headless WLR_HEADLESS_OUTPUTS=1`) configured to a standard resolution (e.g. 1920x1080 via `wlr-randr`).
+2. **Settling Delays**: Enforces visual settling delays (1.8s for `hyprlock`, 2.5s for `custom-qylock`) to allow QML animations and shaders to settle.
+3. **Screenshot Capture**: Executes `grim` within the headless session to capture the exact rendered state.
+4. **Video Frame Extraction**: For video backgrounds (`.mp4`, `.webm`, `.mkv`), `ffmpeg` extracts the frame at timestamp `00:00:01` prior to compositor rendering.
 
-The package is available as `caelestia-cli.packages.<system>.default`, which can be added to your
-`environment.systemPackages`, `users.users.<username>.packages`, `home.packages` if using home-manager,
-or a devshell. The CLI can then be used via the `caelestia` command.
+---
 
-> [!TIP]
-> The default package does not have the shell enabled by default, which is required for full functionality.
-> To enable the shell, use the `with-shell` package. This is the recommended installation method, as
-> the CLI exposes the shell via the `shell` subcommand, meaning there is no need for the shell package
-> to be exposed.
+## Installation & Setup
 
-For home-manager, you can also use the Caelestia's home manager module (explained in
-[configuring](https://github.com/caelestia-dots/shell?tab=readme-ov-file#home-manager-module)) that
-installs and configures the shell and the CLI.
+> [!WARNING]
+> Installation currently requires manual configuration and technical knowledge, as file paths are hardcoded across `lunar-shell`, `lunar-cli`, and `lunar-lock`. A unified installation script is planned as a future target.
 
-### Manual installation
+---
 
-Install all [dependencies](#dependencies), then install
-[`python-build`](https://github.com/pypa/build),
-[`python-installer`](https://github.com/pypa/installer),
-[`python-hatch`](https://github.com/pypa/hatch) and
-[`python-hatch-vcs`](https://github.com/ofek/hatch-vcs).
+## Known Issues & Limitations
 
-e.g. via an AUR helper (yay)
+- **Headless Previews**: Generated previews for native Qylock `.gif` thumbnails rely on original low-resolution GIF assets provided by upstream creators. Future work includes piping live frames directly from the headless compositor to provide high-resolution previews for vanilla Qylock themes.
 
-```sh
-yay -S libnotify swappy grim dart-sass wl-clipboard slurp gpu-screen-recorder glib2 cliphist fuzzel python-build python-installer python-hatch python-hatch-vcs
-```
+---
 
-Now, clone the repo, `cd` into it, build the wheel via `python -m build --wheel`
-and install it via `python -m installer dist/*.whl`. Then, to install the `fish`
-completions, copy the `completions/caelestia.fish` file to
-`/usr/share/fish/vendor_completions.d/caelestia.fish`.
+## Gallery
 
-```sh
-git clone https://github.com/caelestia-dots/cli.git
-cd cli
-python -m build --wheel
-sudo python -m installer dist/*.whl
-sudo cp completions/caelestia.fish /usr/share/fish/vendor_completions.d/caelestia.fish
-```
-
-### Additional steps
-
-#### Auto folder colour theming
-
-For automatic Papirus folder icon colour syncing, you must have [`papirus-folders`](https://github.com/PapirusDevelopmentTeam/papirus-folders)
-installed, and `papirus-folders` must to be able to run with `sudo` without a password prompt.
-
-You can allow this by creating a sudoers file:
-
-```sh
-echo "$USER ALL=(ALL) NOPASSWD: $(which papirus-folders)" | sudo tee /etc/sudoers.d/papirus-folders
-sudo chmod 440 /etc/sudoers.d/papirus-folders
-```
-
-#### Chromium-based browser theming
-
-For live Chromium-based browser theming, the CLI must be allowed to create certain directories in `/etc`
-and write to them via `sudo` without a password prompt.
-
-You can allow this by creating a sudoers file:
-
-```fish
-# Fish shell
-for dir in /etc/chromium/policies/managed /etc/brave/policies/managed /etc/opt/chrome/policies/managed
-    echo "$USER ALL=(ALL) NOPASSWD: $(which mkdir) -p $dir" | sudo tee -a /etc/sudoers.d/caelestia-chromium
-    echo "$USER ALL=(ALL) NOPASSWD: $(which tee) $dir/caelestia.json" | sudo tee -a /etc/sudoers.d/caelestia-chromium
-end
-sudo chmod 440 /etc/sudoers.d/caelestia-chromium
-```
-
-```sh
-# Bash/other shells
-for dir in /etc/chromium/policies/managed /etc/brave/policies/managed /etc/opt/chrome/policies/managed; do
-    echo "$USER ALL=(ALL) NOPASSWD: $(which mkdir) -p $dir" | sudo tee -a /etc/sudoers.d/caelestia-chromium
-    echo "$USER ALL=(ALL) NOPASSWD: $(which tee) $dir/caelestia.json" | sudo tee -a /etc/sudoers.d/caelestia-chromium
-done
-sudo chmod 440 /etc/sudoers.d/caelestia-chromium
-```
-
-## Usage
-
-All subcommands/options can be explored via the help flag.
-
-```
-$ caelestia -h
-usage: caelestia [-h] [-v] COMMAND ...
-
-Main control script for the Caelestia dotfiles
-
-options:
-  -h, --help     show this help message and exit
-  -v, --version  print the current version
-
-subcommands:
-  valid subcommands
-
-  COMMAND        the subcommand to run
-    shell        start or message the shell
-    toggle       toggle a special workspace
-    scheme       manage the colour scheme
-    screenshot   take a screenshot
-    record       start a screen recording
-    clipboard    open clipboard history
-    emoji        emoji/glyph utilities
-    wallpaper    manage the wallpaper
-    resizer      window resizer daemon
-    install      install the Caelestia dotfiles
-    update       update the Caelestia dotfiles
-```
-
-### User templates
-
-Custom user templates can be defined in `~/.config/caelestia/templates/`.
-
-#### Template syntax
-
-`{{ <color>.<format> }}`
-
-- `<color>` is a theme color role derived from the Material You color system (e.g. `primary`, `secondary`, `background`)
-- `<format>` is the output format: `hex` or `rgb`
-
-#### Examples
-
-- `{{ primary.hex }}` outputs `3f4ba2`
-- `{{ primary.rgb }}` outputs `rgb(193, 132, 207)`
-
-Output files are written to `~/.local/state/caelestia/theme/`. You can symlink them to your desired locations.
-
-## Configuring
-
-All configuration options are in `~/.config/caelestia/cli.json`.
-
-<details><summary>Example configuration</summary>
-
-```json
-{
-    "record": {
-        "extraArgs": []
-    },
-    "wallpaper": {
-        "postHook": "echo $WALLPAPER_PATH $SCHEME_NAME $SCHEME_FLAVOUR $SCHEME_MODE $SCHEME_VARIANT $SCHEME_COLOURS"
-    },
-    "theme": {
-        "enableTerm": true,
-        "enableHypr": true,
-        "enableDiscord": true,
-        "enableSpicetify": true,
-        "enablePandora": true,
-        "enableFuzzel": true,
-        "enableBtop": true,
-        "enableNvtop": true,
-        "enableHtop": true,
-        "enableGtk": true,
-        "enableQt": true,
-        "enableWarp": true,
-        "enableChromium": true,
-        "enableZed": true,
-        "enableCava": true,
-        "enableNeovim": true,
-        "iconTheme": "Papirus-Dark",
-        "iconThemeLight": "Papirus-Light",
-        "iconThemeDark": "Papirus-Dark",
-        "postHook": "echo $SCHEME_NAME $SCHEME_FLAVOUR $SCHEME_MODE $SCHEME_VARIANT $SCHEME_COLOURS"
-    },
-    "toggles": {
-        "communication": {
-            "discord": {
-                "enable": true,
-                "match": [{ "class": "discord" }],
-                "command": ["discord"],
-                "move": true
-            },
-            "whatsapp": {
-                "enable": true,
-                "match": [{ "class": "whatsapp" }],
-                "move": true
-            }
-        },
-        "music": {
-            "spotify": {
-                "enable": true,
-                "match": [{ "class": "Spotify" }, { "initialTitle": "Spotify" }, { "initialTitle": "Spotify Free" }],
-                "command": ["spicetify", "watch", "-s"],
-                "move": true
-            },
-            "feishin": {
-                "enable": true,
-                "match": [{ "class": "feishin" }],
-                "move": true
-            }
-        },
-        "sysmon": {
-            "btop": {
-                "enable": true,
-                "match": [{ "class": "btop", "title": "btop", "workspace": { "name": "special:sysmon" } }],
-                "command": ["foot", "-a", "btop", "-T", "btop", "fish", "-C", "exec btop"]
-            }
-        },
-        "todo": {
-            "todoist": {
-                "enable": true,
-                "match": [{ "class": "Todoist" }],
-                "command": ["todoist"],
-                "move": true
-            }
-        }
-    },
-    "dots": {
-        "url": "https://github.com/caelestia-dots/caelestia.git",
-        "branch": "main"
-    }
-}
-```
-
-</details>
+<!-- Add screenshots and videos here -->
