@@ -467,6 +467,66 @@ def apply_neovim(colours: dict[str, str], mode: str) -> None:
     atomic_write(c_state_dir / "nvim-colors.lua", "\n".join(lua_lines) + "\n")
 
 
+def find_obsidian_vaults() -> list[Path]:
+    vaults: list[Path] = []
+
+    # 1. Check user explicit configuration in cli.json
+    cfg = get_config().get("theme", {})
+    if custom_vaults := cfg.get("obsidianVaults"):
+        for v in custom_vaults:
+            p = Path(v).expanduser().resolve()
+            if p.is_dir() and (p / ".obsidian").is_dir() and p not in vaults:
+                vaults.append(p)
+
+    # 2. Check global obsidian config (~/.config/obsidian/obsidian.json)
+    obsidian_config_file = config_dir / "obsidian/obsidian.json"
+    if obsidian_config_file.is_file():
+        try:
+            data = json.loads(obsidian_config_file.read_text())
+            for v_info in data.get("vaults", {}).values():
+                if "path" in v_info:
+                    p = Path(v_info["path"]).expanduser().resolve()
+                    if p.is_dir() and (p / ".obsidian").is_dir() and p not in vaults:
+                        vaults.append(p)
+        except Exception:
+            pass
+
+    return vaults
+
+
+@log_exception
+def apply_obsidian(colours: dict[str, str]) -> None:
+    vaults = find_obsidian_vaults()
+    if not vaults:
+        return
+
+    obsidian_template = templates_dir / "obsidian.css"
+    if not obsidian_template.exists():
+        return
+
+    content = gen_replace(colours, obsidian_template, hash=True)
+
+    for vault in vaults:
+        snippets_dir = vault / ".obsidian/snippets"
+        snippets_dir.mkdir(parents=True, exist_ok=True)
+        snippet_file = snippets_dir / "caelestia.css"
+        atomic_write(snippet_file, content)
+
+        # Ensure snippet is enabled in appearance.json
+        appearance_file = vault / ".obsidian/appearance.json"
+        try:
+            appearance = {}
+            if appearance_file.is_file():
+                appearance = json.loads(appearance_file.read_text())
+            enabled = appearance.get("enabledCssSnippets", [])
+            if "caelestia" not in enabled:
+                enabled.append("caelestia")
+                appearance["enabledCssSnippets"] = enabled
+                atomic_write(appearance_file, json.dumps(appearance, indent=2))
+        except Exception:
+            pass
+
+
 @log_exception
 def apply_user_templates(colours: dict[str, str], mode: str) -> None:
     if not user_templates_dir.is_dir():
@@ -528,6 +588,8 @@ def apply_colours(colours: dict[str, str], mode: str) -> None:
                 apply_cava(colours)
             if check("enableNeovim"):
                 apply_neovim(colours, mode)
+            if check("enableObsidian"):
+                apply_obsidian(colours)
             apply_user_templates(colours, mode)
 
             try:

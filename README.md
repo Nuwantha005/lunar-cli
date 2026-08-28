@@ -16,7 +16,7 @@ The original `caelestia-cli` was modified to create `lunar-cli` to handle expand
 
 ## Features
 
-- **Dynamic Hot-Swappable Recoloring**: Colors update instantly across Kitty terminals, Qt/KDE applications, Firefox (via Pywalfox), and `lunar-shell` components.
+- **Dynamic Hot-Swappable Recoloring**: Colors update instantly across Kitty terminals, Qt/KDE applications, Obsidian, Firefox (via Pywalfox), and `lunar-shell` components.
   - *Note: GTK applications (such as Thunar) require closing all active instances to apply new colors due to GTK design limitations.*
 - **Headless Preview Pipeline**: Subcommands (`caelestia lock --generate-previews` and `caelestia lock --render-preview`) generate accurate lock screen visual previews in a headless environment.
 - **Smart Cache Management**: Preview cache directory (`~/.cache/caelestia/previews/`) with SHA-256 mtime hashing to auto-invalidate stale thumbnails when theme assets or wallpapers change.
@@ -28,6 +28,7 @@ The original `caelestia-cli` was modified to create `lunar-cli` to handle expand
 ### Hot-Swappable Recoloring Architecture
 
 `lunar-cli` uses target-specific mechanisms to push color changes live:
+- **Obsidian**: Auto-discovers active vaults from `~/.config/obsidian/obsidian.json` and renders M3 tokens to `<vault>/.obsidian/snippets/caelestia.css`, triggering native real-time DOM hot-reloading with zero latency.
 - **Qt / KDE Applications**: Generates color definitions (`caelestia.colors` / `caelestia.qss`) and broadcasts the DBus signal `org.kde.KGlobalSettings.notifyChange`, prompting applications like Dolphin to reload colors immediately.
 - **Kitty Terminals**: Targets active Kitty Unix sockets (`kitten @ --to=unix:<socket> set-colors ...`) using `~/.local/state/caelestia/kitty-colors.conf`, eliminating terminal flashing and avoiding filesystem watching overhead.
 - **Firefox Browser**: Maps Material You palette tokens into `~/.cache/wal/colors.json` and triggers `pywalfox update` via the Pywalfox native messaging bridge.

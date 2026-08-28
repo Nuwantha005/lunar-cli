@@ -1,0 +1,100 @@
+/* Caelestia Dynamic Obsidian Theme Snippet (Auto-Generated) */
+
+body,
+.theme-dark,
+.theme-light {
+  /* Surface & Backgrounds */
+  --background-primary: {{ $surface }};
+  --background-primary-alt: {{ $surfaceDim }};
+  --background-secondary: {{ $surfaceContainer }};
+  --background-secondary-alt: {{ $surfaceContainerHigh }};
+  --background-modifier-border: {{ $outlineVariant }};
+  --background-modifier-border-focus: {{ $primary }};
+  --background-modifier-border-hover: {{ $outline }};
+  --background-modifier-form-field: {{ $surfaceContainerHighest }};
+  --background-modifier-form-field-highlighted: {{ $surfaceVariant }};
+  --background-modifier-box-shadow: rgba(0, 0, 0, 0.3);
+  --background-modifier-cover: rgba(0, 0, 0, 0.6);
+  --background-modifier-hover: {{ $surfaceContainerHighest }};
+  --background-modifier-active-hover: {{ $surfaceContainerHigh }};
+  --background-modifier-message: {{ $surfaceContainerHighest }};
+  --background-modifier-error: {{ $error }};
+  --background-modifier-error-hover: {{ $errorContainer }};
+  --background-modifier-success: {{ $term2 }};
+
+  /* Text & Typography */
+  --text-normal: {{ $onSurface }};
+  --text-muted: {{ $onSurfaceVariant }};
+  --text-faint: {{ $outline }};
+  --text-accent: {{ $primary }};
+  --text-accent-hover: {{ $primaryContainer }};
+  --text-on-accent: {{ $onPrimary }};
+  --text-error: {{ $error }};
+  --text-selection: {{ $primaryContainer }};
+  --text-highlight-bg: {{ $primaryContainer }};
+  --text-highlight-bg-active: {{ $primary }};
+
+  /* Interactive Elements & Accents */
+  --interactive-normal: {{ $surfaceContainerHigh }};
+  --interactive-hover: {{ $surfaceBright }};
+  --interactive-accent: {{ $primary }};
+  --interactive-accent-hover: {{ $primaryContainer }};
+  --interactive-success: {{ $term2 }};
+  --caret-color: {{ $primary }};
+
+  /* Workspace, Tabs & Navigation */
+  --titlebar-background: {{ $surfaceContainer }};
+  --titlebar-background-focused: {{ $surfaceContainer }};
+  --titlebar-text: {{ $onSurfaceVariant }};
+  --titlebar-text-focused: {{ $onSurface }};
+  --tab-background-active: {{ $surface }};
+  --tab-text-color-focused-active: {{ $primary }};
+  --tab-text-color-active: {{ $onSurface }};
+  --tab-text-color: {{ $onSurfaceVariant }};
+  --nav-item-color-active: {{ $primary }};
+  --nav-item-background-active: {{ $surfaceContainerHighest }};
+  --nav-item-background-hover: {{ $surfaceContainerHigh }};
+  --status-bar-background: {{ $surfaceContainer }};
+  --status-bar-text: {{ $onSurfaceVariant }};
+  --divider-color: {{ $outlineVariant }};
+
+  /* Modals, Prompts & Overlays */
+  --modal-background: {{ $surfaceContainerHigh }};
+  --modal-border-color: {{ $outlineVariant }};
+  --prompt-background: {{ $surfaceContainerHigh }};
+  --prompt-border-color: {{ $outlineVariant }};
+
+  /* Markdown, Code & Links */
+  --code-background: {{ $surfaceContainerLowest }};
+  --code-normal: {{ $onSurface }};
+  --code-comment: {{ $outline }};
+  --tag-color: {{ $onTertiaryContainer }};
+  --tag-background: {{ $tertiaryContainer }};
+  --tag-background-hover: {{ $tertiary }};
+  --link-color: {{ $primary }};
+  --link-color-hover: {{ $secondary }};
+  --link-external-color: {{ $secondary }};
+  --link-external-color-hover: {{ $primary }};
+  --checkbox-color: {{ $primary }};
+  --checkbox-color-hover: {{ $primaryContainer }};
+  --checkbox-marker-color: {{ $onPrimary }};
+
+  /* Tokyo Night Theme Compatibility Variables */
+  --bg: {{ $surface }};
+  --bg_dark: {{ $surfaceContainer }};
+  --bg_dark2: {{ $surfaceContainerLowest }};
+  --bg_highlight: {{ $outlineVariant }};
+  --bg_highlight_dark: {{ $surfaceContainerHigh }};
+  --fg: {{ $onSurface }};
+  --fg_dark: {{ $onSurfaceVariant }};
+  --comment: {{ $outline }};
+  --blue: {{ $primary }};
+  --blue0: {{ $primaryContainer }};
+  --cyan: {{ $secondary }};
+  --magenta: {{ $tertiary }};
+  --yellow: {{ $term3 }};
+  --green: {{ $term2 }};
+  --orange: {{ $term1 }};
+  --red: {{ $error }};
+  --red1: {{ $errorContainer }};
+}
