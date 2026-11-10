@@ -1,5 +1,8 @@
 import subprocess
 from argparse import Namespace
+from pathlib import Path
+
+LUNAR_SHELL_PATH = Path.home() / "work-linux/projects/arch/shell/lunar-shell"
 
 
 class Command:
@@ -9,17 +12,7 @@ class Command:
         self.args = args
 
     def run(self) -> None:
-        clip = subprocess.check_output(["cliphist", "list"])
-
         if self.args.delete:
-            args = ["--prompt=del > ", "--placeholder=Delete from clipboard"]
+            subprocess.run(["qs", "-p", str(LUNAR_SHELL_PATH), "ipc", "call", "clipboard", "clear"])
         else:
-            args = ["--placeholder=Type to search clipboard"]
-
-        chosen = subprocess.check_output(["fuzzel", "--dmenu", *args], input=clip)
-
-        if self.args.delete:
-            subprocess.run(["cliphist", "delete"], input=chosen)
-        else:
-            decoded = subprocess.check_output(["cliphist", "decode"], input=chosen)
-            subprocess.run(["wl-copy"], input=decoded)
+            subprocess.run(["qs", "-p", str(LUNAR_SHELL_PATH), "ipc", "call", "clipboard", "toggle"])
